@@ -1,0 +1,9 @@
+run = "npm start"
+
+[nix]
+channel = "stable-24_05"
+
+[deps]
+pkgs = [
+    pkgs.nodejs_18
+]
