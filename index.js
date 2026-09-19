@@ -14,6 +14,9 @@ const CHANNEL_ID = process.env.STATUS_CHANNEL_ID;
 const UPDATE_INTERVAL = (parseInt(process.env.UPDATE_SECONDS) || 15) * 1000;
 const PORT = process.env.PORT || 3000;
 
+// Lista de nick's do Minecraft que NÃO devem ser contados (em minúsculas)
+const IGNORED_PLAYERS = ['nome_do_bot', 'outro_bot_afk'].map(n => n.toLowerCase());
+
 if (!TOKEN || !MC_HOST || !CHANNEL_ID) {
   console.error('❌ [ERRO] Variáveis de ambiente obrigatórias não encontradas! Verifique os Segredos (Secrets).');
   process.exit(1);
