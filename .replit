@@ -1,9 +1,10 @@
 run = "npm start"
+entrypoint = "index.js"
 
 [nix]
 channel = "stable-24_05"
 
 [deps]
 pkgs = [
-    pkgs.nodejs_18
+    pkgs.nodejs
 ]
