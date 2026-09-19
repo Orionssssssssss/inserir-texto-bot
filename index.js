@@ -15,7 +15,7 @@ const UPDATE_INTERVAL = (parseInt(process.env.UPDATE_SECONDS) || 15) * 1000;
 const PORT = process.env.PORT || 3000;
 
 // Lista de nick's do Minecraft que NÃO devem ser contados (em minúsculas)
-const IGNORED_PLAYERS = ['nome_do_bot', 'outro_bot_afk'].map(n => n.toLowerCase());
+const IGNORED_PLAYERS = ['inserirtexto'].map(n => n.toLowerCase());
 
 if (!TOKEN || !MC_HOST || !CHANNEL_ID) {
   console.error('❌ [ERRO] Variáveis de ambiente obrigatórias não encontradas! Verifique os Segredos (Secrets).');
@@ -46,7 +46,7 @@ const client = new Client({
 let statusMessage = null; // Guarda a referência da mensagem para edição rápida
 
 // ==========================================
-// 4. FUNÇÃO DE CONSULTA AO MINECRAFT (PING + FALLBACK)
+// 4. FUNÇÃO DE CONSULTA AO MINECRAFT (PING + FALLBACK + BLACKLIST)
 // ==========================================
 async function fetchMinecraftStatus() {
   // Tentativa 1: Socket direto via minecraft-server-util
@@ -55,24 +55,42 @@ async function fetchMinecraftStatus() {
       timeout: 5000,
       enableSRV: true
     });
+
+    // Identificar se o bot ignorado está dentro do servidor
+    const samplePlayers = result.players.sample || [];
+    const ignoredFound = samplePlayers.filter(player => 
+      IGNORED_PLAYERS.includes(player.name.toLowerCase())
+    ).length;
+
+    // Subtrai o bot da contagem oficial
+    const realOnline = Math.max(0, result.players.online - ignoredFound);
+
     return {
       online: true,
-      playersOnline: result.players.online,
+      playersOnline: realOnline,
       maxPlayers: result.players.max,
       version: result.version.name,
       ping: result.roundTripLatency,
       motd: result.motd.clean || 'Servidor de Minecraft'
     };
   } catch (primaryError) {
-    // Tentativa 2: Fallback via API REST (MCSrvStat) caso a porta/socket esteja bloqueada no Replit
+    // Tentativa 2: Fallback via API REST (MCSrvStat)
     try {
       const response = await fetch(`https://api.mcsrvstat.us/3/${MC_HOST}:${MC_PORT}`);
       const data = await response.json();
 
       if (data.online) {
+        const playerList = data.players?.list || [];
+        const ignoredFound = playerList.filter(name => 
+          IGNORED_PLAYERS.includes(name.toLowerCase())
+        ).length;
+
+        const rawOnline = data.players?.online || 0;
+        const realOnline = Math.max(0, rawOnline - ignoredFound);
+
         return {
           online: true,
-          playersOnline: data.players?.online || 0,
+          playersOnline: realOnline,
           maxPlayers: data.players?.max || 20,
           version: data.version || '1.20.x',
           ping: data.debug?.ping || 50,
