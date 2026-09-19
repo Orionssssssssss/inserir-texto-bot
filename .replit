@@ -6,5 +6,5 @@ channel = "stable-24_05"
 
 [deps]
 pkgs = [
-    pkgs.nodejs
+    "pkgs.nodejs_18"
 ]
